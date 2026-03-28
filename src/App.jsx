@@ -1,13 +1,12 @@
 import { useEffect } from 'react'
 import useTodoStore from './store'
+import { rescheduleAllReminders } from './utils'
 import Sidebar from './components/Sidebar'
 import MainContent from './components/MainContent'
-import { rescheduleAllReminders } from './utils'
 
 export default function App() {
   const { todos } = useTodoStore()
 
-  // Reschedule any pending reminders on mount
   useEffect(() => {
     rescheduleAllReminders(todos)
   }, [])

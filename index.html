@@ -7,7 +7,12 @@
     <title>todoapp</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="js-loading" style="padding:40px;font-family:sans-serif;color:#666">
+        Loading app… (if this persists, JavaScript may be blocked)
+      </div>
+    </div>
+    <script>document.getElementById('js-loading') && (document.getElementById('js-loading').style.display='block')</script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

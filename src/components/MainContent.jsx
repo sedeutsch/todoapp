@@ -13,7 +13,7 @@ export default function MainContent() {
     reorderTodos,
   } = useTodoStore()
 
-  const [todoModal, setTodoModal] = useState(null) // null | 'new' | todo object
+  const [todoModal, setTodoModal] = useState(null) // null | 'new'
   const [showEmptyDates, setShowEmptyDates] = useState(false)
 
   // Keyboard shortcuts
@@ -103,6 +103,7 @@ export default function MainContent() {
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="main-content">
         <div className="main-header">
+          <div className="main-header-inner">
           <div className="main-header-top">
             {sidebarCollapsed && (
               <button
@@ -125,6 +126,7 @@ export default function MainContent() {
             </div>
           </div>
           {subtitle && <div className="main-subtitle">{subtitle}</div>}
+          </div>
         </div>
 
         <div className="todo-list-container">
@@ -134,15 +136,13 @@ export default function MainContent() {
                 todos={viewTodos}
                 showEmptyDates={showEmptyDates}
                 setShowEmptyDates={setShowEmptyDates}
-                onEdit={(t) => setTodoModal(t)}
               />
             ) : activeView === 'completed' ? (
-              <CompletedView todos={viewTodos} onEdit={(t) => setTodoModal(t)} />
+              <CompletedView todos={viewTodos} />
             ) : (
               <StandardView
                 todos={viewTodos}
                 view={activeView}
-                onEdit={(t) => setTodoModal(t)}
                 onNew={() => setTodoModal('new')}
               />
             )}
@@ -150,10 +150,10 @@ export default function MainContent() {
         </div>
       </div>
 
-      {todoModal && (
+      {todoModal === 'new' && (
         <TodoModal
-          todo={todoModal === 'new' ? null : todoModal}
-          defaultProjectId={todoModal === 'new' ? defaultProjectId : undefined}
+          todo={null}
+          defaultProjectId={defaultProjectId}
           onClose={() => setTodoModal(null)}
         />
       )}
@@ -162,7 +162,7 @@ export default function MainContent() {
 }
 
 // ─── Standard View (Today / Anytime / Inbox / Project) ────────────────────────
-function StandardView({ todos, view, onEdit, onNew }) {
+function StandardView({ todos, view, onNew }) {
   const sorted = [...todos].sort((a, b) => {
     // Sort by order, then creation date
     if (a.order !== b.order) return (a.order ?? 0) - (b.order ?? 0)
@@ -188,7 +188,6 @@ function StandardView({ todos, view, onEdit, onNew }) {
               todo={todo}
               index={index}
               showProject={view !== 'project'}
-              onEdit={onEdit}
             />
           ))}
           {provided.placeholder}
@@ -214,7 +213,7 @@ function StandardView({ todos, view, onEdit, onNew }) {
 }
 
 // ─── Upcoming View ─────────────────────────────────────────────────────────────
-function UpcomingView({ todos, showEmptyDates, setShowEmptyDates, onEdit }) {
+function UpcomingView({ todos, showEmptyDates, setShowEmptyDates }) {
   // Generate next 14 days
   const today = todayStr()
   const days = Array.from({ length: 14 }, (_, i) =>
@@ -262,7 +261,7 @@ function UpcomingView({ todos, showEmptyDates, setShowEmptyDates, onEdit }) {
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps}>
               {dayTodos.map((todo, index) => (
-                <TodoItem key={todo.id} todo={todo} index={index} showProject onEdit={onEdit} />
+                <TodoItem key={todo.id} todo={todo} index={index} showProject />
               ))}
               {provided.placeholder}
               {dayTodos.length === 0 && (
@@ -291,7 +290,7 @@ function UpcomingView({ todos, showEmptyDates, setShowEmptyDates, onEdit }) {
 }
 
 // ─── Completed View ────────────────────────────────────────────────────────────
-function CompletedView({ todos, onEdit }) {
+function CompletedView({ todos }) {
   // Group by completion date
   const groups = {}
   todos.forEach((todo) => {
@@ -326,7 +325,7 @@ function CompletedView({ todos, onEdit }) {
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 {groups[date].map((todo, index) => (
-                  <TodoItem key={todo.id} todo={todo} index={index} showProject onEdit={onEdit} />
+                  <TodoItem key={todo.id} todo={todo} index={index} showProject />
                 ))}
                 {provided.placeholder}
               </div>

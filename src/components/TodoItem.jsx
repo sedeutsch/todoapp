@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Draggable } from '@hello-pangea/dnd'
 import useTodoStore from '../store'
 import TagChip from './TagChip'
+import TodoInlineCard from './TodoInlineCard'
 
 
-export default function TodoItem({ todo, index, showProject = false, onEdit }) {
+export default function TodoItem({ todo, index, showProject = false }) {
   const { toggleTodo, tags } = useTodoStore()
   const [justCompleted, setJustCompleted] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const todoTags = (todo.tags || [])
     .map((id) => tags.find((t) => t.id === id))
@@ -21,25 +23,28 @@ export default function TodoItem({ todo, index, showProject = false, onEdit }) {
     toggleTodo(todo.id)
   }
 
+  if (editing) {
+    return (
+      <Draggable draggableId={todo.id} index={index}>
+        {(provided) => (
+          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+            <TodoInlineCard todo={todo} onClose={() => setEditing(false)} />
+          </div>
+        )}
+      </Draggable>
+    )
+  }
+
   return (
     <Draggable draggableId={todo.id} index={index}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
+          {...provided.dragHandleProps}
           className={`todo-item ${todo.completed ? 'completed' : ''} ${snapshot.isDragging ? 'is-dragging' : ''} ${justCompleted ? 'check-pop' : ''}`}
-          onClick={() => onEdit(todo)}
+          onDoubleClick={(e) => { e.preventDefault(); setEditing(true) }}
         >
-          {/* Drag handle */}
-          <span
-            {...provided.dragHandleProps}
-            className="todo-drag-handle"
-            onClick={(e) => e.stopPropagation()}
-            title="Drag to reorder"
-          >
-            ⠿
-          </span>
-
           {/* Checkbox */}
           <div
             className={`todo-checkbox ${justCompleted ? 'check-pop' : ''}`}

@@ -1,32 +1,34 @@
-import { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
+import { useEffect } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { Markdown } from 'tiptap-markdown'
 
 export default function MarkdownEditor({ value, onChange, placeholder = 'Add notes, links, checklists...' }) {
-  const [tab, setTab] = useState('edit')
+  const editor = useEditor({
+    extensions: [StarterKit, Markdown],
+    content: value || '',
+    editorProps: {
+      attributes: {
+        class: 'tiptap-editor',
+        'data-placeholder': placeholder,
+      },
+    },
+    onUpdate({ editor }) {
+      onChange(editor.storage.markdown.getMarkdown())
+    },
+  })
+
+  useEffect(() => {
+    if (!editor) return
+    const current = editor.storage.markdown.getMarkdown()
+    if (value !== current) {
+      editor.commands.setContent(value || '')
+    }
+  }, [editor, value])
 
   return (
     <div className="md-wrap">
-      <div className="md-tabs">
-        <button className={`md-tab ${tab === 'edit' ? 'active' : ''}`} onClick={() => setTab('edit')}>Edit</button>
-        <button className={`md-tab ${tab === 'preview' ? 'active' : ''}`} onClick={() => setTab('preview')}>Preview</button>
-      </div>
-      {tab === 'edit' ? (
-        <textarea
-          className="md-edit-area"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={5}
-        />
-      ) : (
-        <div className="md-preview">
-          {value ? (
-            <ReactMarkdown>{value}</ReactMarkdown>
-          ) : (
-            <span style={{ color: 'var(--text-tertiary)', fontStyle: 'italic', fontSize: '13px' }}>Nothing to preview</span>
-          )}
-        </div>
-      )}
+      <EditorContent editor={editor} />
     </div>
   )
 }

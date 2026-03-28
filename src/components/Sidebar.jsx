@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import useTodoStore from '../store'
-import { todayStr } from '../utils'
+import { todayStr, TAG_COLOR_OPTIONS, getTagColor } from '../utils'
 import ProjectModal from './ProjectModal'
 import AreaModal from './AreaModal'
 
@@ -11,14 +11,17 @@ function countTodos(todos, filter) {
 
 export default function Sidebar() {
   const {
-    todos, projects, areas,
+    todos, projects, areas, tags,
     activeView, setActiveView,
     sidebarCollapsed, toggleSidebar,
     toggleAreaCollapse, reorderProjects,
+    addTag, updateTag, deleteTag,
   } = useTodoStore()
 
-  const [projectModal, setProjectModal] = useState(null) // null | 'new' | project obj
+  const [projectModal, setProjectModal] = useState(null)
   const [areaModal, setAreaModal] = useState(null)
+  const [editingTagId, setEditingTagId] = useState(null) // tag id being edited, or 'new'
+  const [tagForm, setTagForm] = useState({ name: '', color: 'blue' })
 
   const today = todayStr()
 
@@ -272,6 +275,68 @@ export default function Sidebar() {
               </button>
             )}
           </div>
+
+          {/* Tags */}
+          <div className="sidebar-section">
+            <div className="sidebar-section-label">
+              <span>Tags</span>
+              <div className="label-actions">
+                <button
+                  className="label-action-btn"
+                  title="New tag"
+                  onClick={() => { setEditingTagId('new'); setTagForm({ name: '', color: 'blue' }) }}
+                >+</button>
+              </div>
+            </div>
+
+            {tags.map((tag) => {
+              const color = getTagColor(tag.color)
+              if (editingTagId === tag.id) {
+                return (
+                  <TagForm
+                    key={tag.id}
+                    form={tagForm}
+                    setForm={setTagForm}
+                    onSave={() => {
+                      if (tagForm.name.trim()) updateTag(tag.id, { name: tagForm.name.trim(), color: tagForm.color })
+                      setEditingTagId(null)
+                    }}
+                    onCancel={() => setEditingTagId(null)}
+                  />
+                )
+              }
+              return (
+                <div key={tag.id} className="nav-item tag-nav-item">
+                  <span className="tag-nav-dot" style={{ background: color.dot }} />
+                  <span className="nav-item-name">{tag.name}</span>
+                  <div className="nav-item-actions">
+                    <button
+                      className="nav-action-btn"
+                      title="Edit tag"
+                      onClick={(e) => { e.stopPropagation(); setEditingTagId(tag.id); setTagForm({ name: tag.name, color: tag.color }) }}
+                    >✎</button>
+                    <button
+                      className="nav-action-btn"
+                      title="Delete tag"
+                      onClick={(e) => { e.stopPropagation(); deleteTag(tag.id) }}
+                    >✕</button>
+                  </div>
+                </div>
+              )
+            })}
+
+            {editingTagId === 'new' && (
+              <TagForm
+                form={tagForm}
+                setForm={setTagForm}
+                onSave={() => {
+                  if (tagForm.name.trim()) addTag({ name: tagForm.name.trim(), color: tagForm.color })
+                  setEditingTagId(null)
+                }}
+                onCancel={() => setEditingTagId(null)}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -306,5 +371,38 @@ export default function Sidebar() {
         />
       )}
     </DragDropContext>
+  )
+}
+
+function TagForm({ form, setForm, onSave, onCancel }) {
+  const inputRef = useRef(null)
+  useEffect(() => { inputRef.current?.focus() }, [])
+
+  return (
+    <div className="tag-form">
+      <input
+        ref={inputRef}
+        className="tag-form-input"
+        placeholder="Tag name"
+        value={form.name}
+        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+        onKeyDown={(e) => { if (e.key === 'Enter') onSave(); if (e.key === 'Escape') onCancel() }}
+      />
+      <div className="tag-form-colors">
+        {TAG_COLOR_OPTIONS.map((c) => (
+          <button
+            key={c.id}
+            className={`tag-color-swatch ${form.color === c.id ? 'selected' : ''}`}
+            style={{ background: c.dot }}
+            onClick={() => setForm((f) => ({ ...f, color: c.id }))}
+            title={c.id}
+          />
+        ))}
+      </div>
+      <div className="tag-form-actions">
+        <button className="btn btn-accent btn-sm" onClick={onSave}>Save</button>
+        <button className="btn btn-secondary btn-sm" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
   )
 }

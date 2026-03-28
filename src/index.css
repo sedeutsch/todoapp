@@ -181,7 +181,7 @@ input, textarea, select { font-family: inherit; outline: none; border: none; bac
 /* ─── Todo List ────────────────────────────────────────────────────────────── */
 .todo-list-container { flex: 1; overflow-y: auto; padding: 8px 32px 80px; }
 .todo-list-container::-webkit-scrollbar { width: 0; }
-.todo-list { max-width: 660px; }
+.todo-list { max-width: 660px; margin: 0 auto; }
 
 .todo-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;

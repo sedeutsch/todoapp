@@ -12,7 +12,16 @@
         Loading app… (if this persists, JavaScript may be blocked)
       </div>
     </div>
-    <script>document.getElementById('js-loading') && (document.getElementById('js-loading').style.display='block')</script>
+    <script>
+      window.onerror = function(msg, src, line, col, err) {
+        var el = document.getElementById('js-loading');
+        if (el) el.innerHTML = '<b style="color:red">JS Error:</b><br><pre style="font-size:12px;white-space:pre-wrap">' + msg + '\n' + (err && err.stack ? err.stack : src + ':' + line) + '</pre>';
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        var el = document.getElementById('js-loading');
+        if (el) el.innerHTML = '<b style="color:red">Unhandled Promise Rejection:</b><br><pre style="font-size:12px;white-space:pre-wrap">' + String(e.reason && e.reason.stack || e.reason) + '</pre>';
+      });
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
